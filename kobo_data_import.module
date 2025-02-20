@@ -42,13 +42,25 @@ function kobo_data_import_cron() {
           continue;
         }
 
+        // Prepare geolocation field in WKT format
+        $wkt = NULL; // Default to NULL
+        if (isset($entry['_geolocation']) && is_array($entry['_geolocation']) && count($entry['_geolocation']) === 2) {
+          $latitude = $entry['_geolocation'][0];
+          $longitude = $entry['_geolocation'][1];
+
+          if (is_numeric($latitude) && is_numeric($longitude)) {
+            $wkt = "POINT($longitude $latitude)"; // WKT format: POINT(longitude latitude)
+          }
+        }
+
         // Create a new node for each entry
         $node = Node::create([
           'type' => 'valuation', // Replace with your content type machine name
-          'title' => $entry['Client_Name'], // Example: Set title as Client Name
-          'field_bank_name' => $entry['Bank_Name'], // Example field 1
-          'field_branch' => $entry['Branch'], // Example field 2
+          'title' => $entry['Client_Name'] ?? 'Untitled', // Example: Set title as Client Name
+          'field_bank_name' => $entry['Bank_Name'] ?? NULL, // Example field 1
+          'field_branch' => $entry['Branch'] ?? NULL, // Example field 2
           'field_submission_uuid' => $entry['_uuid'], // Store UUID to prevent duplicates
+          'field_geo' => $wkt, // Store geolocation in WKT format
         ]);
         
         $node->save();
