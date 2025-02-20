@@ -1,0 +1,7 @@
+kobo_data_import.trigger:
+  path: '/admin/kobo-data-import'
+  defaults:
+    _controller: '\Drupal\kobo_data_import\Controller\KoboDataImportController::triggerImport'
+    _title: 'Trigger KoBo Data Import'
+  requirements:
+    _permission: 'administer site configuration'

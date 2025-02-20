@@ -1,0 +1,61 @@
+<?php
+
+use Drupal\node\Entity\Node;
+use GuzzleHttp\Client;
+
+/**
+ * Implements hook_cron().
+ */
+function kobo_data_import_cron() {
+  // API URL
+  $url = 'https://kf.kobotoolbox.org/api/v2/assets/awQCTm75xgqkATyDVivYYG/data/?format=json';
+  
+  // API Authentication details
+  $username = 'apurwa'; // Replace with your username
+  $password = '1223334444'; // Replace with your password
+  
+  // Creating the HTTP client
+  $client = new Client();
+
+  // Make the API request with authentication
+  try {
+    $response = $client->request('GET', $url, [
+      'auth' => [$username, $password],
+    ]);
+    
+    $data = json_decode($response->getBody()->getContents(), TRUE);
+    
+    // Process the data and create a node for each submission
+    if (isset($data['results']) && count($data['results']) > 0) {
+      foreach ($data['results'] as $entry) {
+        // Query the database for a node with the same submission UUID
+        $query = \Drupal::entityQuery('node')
+          ->condition('type', 'valuation') // Replace with your content type machine name
+          ->condition('field_submission_uuid', $entry['_uuid']) // Match the UUID field
+          ->range(0, 1) // Limit to 1 result
+          ->accessCheck(FALSE); // Disable access checks
+
+        $existing_node_ids = $query->execute();
+
+        if (!empty($existing_node_ids)) {
+          // Skip if this submission already exists in the system
+          continue;
+        }
+
+        // Create a new node for each entry
+        $node = Node::create([
+          'type' => 'valuation', // Replace with your content type machine name
+          'title' => $entry['Client_Name'], // Example: Set title as Client Name
+          'field_bank_name' => $entry['Bank_Name'], // Example field 1
+          'field_branch' => $entry['Branch'], // Example field 2
+          'field_submission_uuid' => $entry['_uuid'], // Store UUID to prevent duplicates
+        ]);
+        
+        $node->save();
+      }
+    }
+  } catch (\Exception $e) {
+    \Drupal::logger('kobo_data_import')->error('Error fetching data from KoBo: ' . $e->getMessage());
+  }
+}
+?>

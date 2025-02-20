@@ -1,0 +1,8 @@
+name: 'KoBo Data Import'
+type: module
+description: 'Pull data from KoBoToolbox and display it in a content type.'
+core_version_requirement: ^10
+package: Custom
+dependencies:
+  - drupal:node
+  - drupal:field
