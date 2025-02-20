@@ -36,13 +36,44 @@ function kobo_data_import_cron() {
           continue;
         }
 
-        // Create a new node.
+// Prepare geolocation field in WKT format
+
+
+
+        $wkt = NULL; // Default to NULL
+
+
+        if (isset($entry['_geolocation']) && is_array($entry['_geolocation']) && count($entry['_geolocation']) === 2) {
+
+
+          $latitude = $entry['_geolocation'][0];
+
+
+          $longitude = $entry['_geolocation'][1];
+
+
+
+
+
+          if (is_numeric($latitude) && is_numeric($longitude)) {
+
+
+            $wkt = "POINT($longitude $latitude)"; // WKT format: POINT(longitude latitude)
+
+
+          }
+
+
+        }
+
+// Create a new node.
         $node = Node::create([
           'type' => 'valuation',
           'title' => $entry['Client_Name'],
           'field_bank_name' => $entry['Bank_Name'],
           'field_branch' => $entry['Branch'],
-          'field_submission_uuid' => $entry['_uuid'],
+	  'field_submission_uuid' => $entry['_uuid'],
+	  'field_geo' => $wkt, // Store geolocation in WKT format
         ]);
 
         // Process Image
