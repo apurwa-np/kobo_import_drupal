@@ -38,32 +38,13 @@ function kobo_data_import_cron() {
 
 // Prepare geolocation field in WKT format
 
-
-
         $wkt = NULL; // Default to NULL
-
-
         if (isset($entry['_geolocation']) && is_array($entry['_geolocation']) && count($entry['_geolocation']) === 2) {
-
-
           $latitude = $entry['_geolocation'][0];
-
-
           $longitude = $entry['_geolocation'][1];
-
-
-
-
-
           if (is_numeric($latitude) && is_numeric($longitude)) {
-
-
             $wkt = "POINT($longitude $latitude)"; // WKT format: POINT(longitude latitude)
-
-
           }
-
-
         }
 
 // Create a new node.
@@ -72,8 +53,45 @@ function kobo_data_import_cron() {
           'title' => $entry['Client_Name'],
           'field_bank_name' => $entry['Bank_Name'],
           'field_branch' => $entry['Branch'],
-	  'field_submission_uuid' => $entry['_uuid'],
-	  'field_geo' => $wkt, // Store geolocation in WKT format
+      	  'field_submission_uuid' => $entry['_uuid'],
+      	  'field_geo' => $wkt, // Store geolocation in WKT format
+          'field_address' => $entry['Address'],
+          'field_bank_cooperative_name' => $entry['Bank_Cooperative_Name'],
+          'field_client_name' => $entry['Client_Name'],
+          'field_comments' => $entry['Comments'],
+          'field_commercial_rate' => $entry['Commercial_Rate_NPR'],
+          'field_contact_number' => $entry['Contact_Number'],
+          'field_distance_from_road' => $entry['Distance_from_road_ft'],
+          'field_distrance_from_high_tensio' => $entry['Distrance_from_High_Electrical_Line_ft'],
+          'field_doors_and_windows' => $entry['Doors_and_windows'],
+          'field_east' => $entry['text_lu3fu39'],
+          'field_floor_finishing' => $entry['Floor_finishing'],
+          'field_high_tension_electrical_li' => $entry['High_Tension_Electrical_Line'],
+          'field_inner_wall_and_ceiling_sur' => $entry['Inner_wall_and_ceiling_surface'],
+          'field_lalpurja_type' => $entry['Lalpurja_type'],
+          'field_loan_amount' => $entry['Loan_Amount'],
+          'field_location_as_per_cadastral_' => $entry['Location_as_per_Cadastral_Map'],
+          'field_location_type' => $entry['Location_type'],
+          'field_mohoda' => $entry['Mohoda_ft'],
+          'field_north' => $entry['text_sd7wq10'],
+          'field_other_facilities' => $entry['Nearest_landmark'],
+          'field_property_mortgage' => $entry['Property_Mortgage'],
+          'field_property_owner' => $entry['Property_Owner'],
+          'field_property_use' => $entry['Property_use'],
+          'field_required_loan' => $entry['Required_Loan_NPR'],
+          'field_right_of_way' => $entry['Right_of_Way_ft'],
+          'field_river_stream' => $entry['River_stream'],
+          'field_road_type' => $entry['Road_Type'],
+          'field_site_visit_by_consultancy_' => $entry['Site_visitors'],
+          'field_south' => $entry['text_mq6by02'],
+          'field_ter' => $entry['Terrain_type'],
+          'field_trace_plot_no' => $entry['Trace_Plot_No'],
+          'field_type' => $entry['Type_of_loan'],
+          'field_type_of_property' => $entry['Type_of_property'],
+          'field_west' => $entry['text_qo2qv32'],
+          'field_wide' => $entry['Wide_ft'],
+
+
         ]);
 
         // Process Image
