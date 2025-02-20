@@ -1,73 +1,98 @@
 <?php
-
 use Drupal\node\Entity\Node;
+use Drupal\file\Entity\File;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 /**
  * Implements hook_cron().
  */
 function kobo_data_import_cron() {
-  // API URL
   $url = 'https://kf.kobotoolbox.org/api/v2/assets/awQCTm75xgqkATyDVivYYG/data/?format=json';
-  
-  // API Authentication details
-  $username = 'apurwa'; // Replace with your username
-  $password = '1223334444'; // Replace with your password
-  
-  // Creating the HTTP client
+  $username = 'apurwa';
+  $password = '1223334444';
+
   $client = new Client();
 
-  // Make the API request with authentication
   try {
     $response = $client->request('GET', $url, [
       'auth' => [$username, $password],
     ]);
-    
+
     $data = json_decode($response->getBody()->getContents(), TRUE);
-    
-    // Process the data and create a node for each submission
+
     if (isset($data['results']) && count($data['results']) > 0) {
       foreach ($data['results'] as $entry) {
-        // Query the database for a node with the same submission UUID
+        // Check if the node already exists.
         $query = \Drupal::entityQuery('node')
-          ->condition('type', 'valuation') // Replace with your content type machine name
-          ->condition('field_submission_uuid', $entry['_uuid']) // Match the UUID field
-          ->range(0, 1) // Limit to 1 result
-          ->accessCheck(FALSE); // Disable access checks
-
+          ->condition('type', 'valuation')
+          ->condition('field_submission_uuid', $entry['_uuid'])
+          ->range(0, 1)
+          ->accessCheck(FALSE);
+        
         $existing_node_ids = $query->execute();
 
         if (!empty($existing_node_ids)) {
-          // Skip if this submission already exists in the system
           continue;
         }
 
-        // Prepare geolocation field in WKT format
-        $wkt = NULL; // Default to NULL
-        if (isset($entry['_geolocation']) && is_array($entry['_geolocation']) && count($entry['_geolocation']) === 2) {
-          $latitude = $entry['_geolocation'][0];
-          $longitude = $entry['_geolocation'][1];
+        // Create a new node.
+        $node = Node::create([
+          'type' => 'valuation',
+          'title' => $entry['Client_Name'],
+          'field_bank_name' => $entry['Bank_Name'],
+          'field_branch' => $entry['Branch'],
+          'field_submission_uuid' => $entry['_uuid'],
+        ]);
 
-          if (is_numeric($latitude) && is_numeric($longitude)) {
-            $wkt = "POINT($longitude $latitude)"; // WKT format: POINT(longitude latitude)
+        // Process Image
+        if (!empty($entry['Property_Photo'])) {
+          $image_path = "apurwa/attachments/cfa07289e9384f918aecc263233f2867/{$entry['_uuid']}/{$entry['Property_Photo']}";
+          $image_url = "https://kc.kobotoolbox.org/media/original?media_file=" . urlencode($image_path);
+
+          $saved_file = save_kobo_image($image_url, $entry['Property_Photo']);
+          if ($saved_file) {
+            $node->set('field_image2', $saved_file->id());
           }
         }
 
-        // Create a new node for each entry
-        $node = Node::create([
-          'type' => 'valuation', // Replace with your content type machine name
-          'title' => $entry['Client_Name'] ?? 'Untitled', // Example: Set title as Client Name
-          'field_bank_name' => $entry['Bank_Name'] ?? NULL, // Example field 1
-          'field_branch' => $entry['Branch'] ?? NULL, // Example field 2
-          'field_submission_uuid' => $entry['_uuid'], // Store UUID to prevent duplicates
-          'field_geo' => $wkt, // Store geolocation in WKT format
-        ]);
-        
         $node->save();
       }
     }
   } catch (\Exception $e) {
     \Drupal::logger('kobo_data_import')->error('Error fetching data from KoBo: ' . $e->getMessage());
   }
+}
+
+/**
+ * Downloads an image from KoBo and saves it in Drupal's public files.
+ */
+function save_kobo_image($image_url, $filename) {
+  $client = new Client();
+  $directory = 'public://kobo_images/';
+
+  // Ensure the directory exists.
+  \Drupal::service('file_system')->prepareDirectory($directory, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY);
+
+  try {
+    $response = $client->request('GET', $image_url, [
+      'auth' => ['apurwa', '1223334444'],
+      'sink' => $directory . $filename,
+    ]);
+
+    if ($response->getStatusCode() == 200) {
+      $file = File::create([
+        'uri' => $directory . $filename,
+        'status' => 1,
+      ]);
+      $file->save();
+
+      return $file;
+    }
+  } catch (RequestException $e) {
+    \Drupal::logger('kobo_data_import')->error('Error downloading image: ' . $e->getMessage());
+  }
+
+  return NULL;
 }
 ?>
