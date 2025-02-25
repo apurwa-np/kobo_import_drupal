@@ -8,7 +8,7 @@ use GuzzleHttp\Exception\RequestException;
  * Implements hook_cron().
  */
 function kobo_data_import_cron() {
-  $url = 'https://kf.kobotoolbox.org/api/v2/assets/awQCTm75xgqkATyDVivYYG/data/?format=json';
+  $url = 'https://kf.kobotoolbox.org/api/v2/assets/aujWw6hdLuorCbypbqCkiN/data/?format=json';
   $username = 'apurwa';
   $password = '1223334444';
 
@@ -25,7 +25,7 @@ function kobo_data_import_cron() {
       foreach ($data['results'] as $entry) {
         // Check if the node already exists.
         $query = \Drupal::entityQuery('node')
-          ->condition('type', 'valuation')
+          ->condition('type', 'survey')
           ->condition('field_submission_uuid', $entry['_uuid'])
           ->range(0, 1)
           ->accessCheck(FALSE);
@@ -47,63 +47,75 @@ function kobo_data_import_cron() {
           }
         }
 
-// Create a new node.
-        $node = Node::create([
-          'type' => 'valuation',
-          'title' => $entry['Client_Name'],
-          'field_bank_name' => $entry['Bank_Name'],
-          'field_branch' => $entry['Branch'],
-      	  'field_submission_uuid' => $entry['_uuid'],
-      	  'field_geo' => $wkt, // Store geolocation in WKT format
-          'field_address' => $entry['Address'],
-          'field_bank_cooperative_name' => $entry['Bank_Cooperative_Name'],
-          'field_client_name' => $entry['Client_Name'],
-          'field_comments' => $entry['Comments'],
-          'field_commercial_rate' => $entry['Commercial_Rate_NPR'],
-          'field_contact_number' => $entry['Contact_Number'],
-          'field_distance_from_road' => $entry['Distance_from_road_ft'],
-          'field_distrance_from_high_tensio' => $entry['Distrance_from_High_Electrical_Line_ft'],
-          'field_doors_and_windows' => $entry['Doors_and_windows'],
-          'field_east' => $entry['text_lu3fu39'],
-          'field_floor_finishing' => $entry['Floor_finishing'],
-          'field_high_tension_electrical_li' => $entry['High_Tension_Electrical_Line'],
-          'field_inner_wall_and_ceiling_sur' => $entry['Inner_wall_and_ceiling_surface'],
-          'field_lalpurja_type' => $entry['Lalpurja_type'],
-          'field_loan_amount' => $entry['Loan_Amount'],
-          'field_location_as_per_cadastral_' => $entry['Location_as_per_Cadastral_Map'],
-          'field_location_type' => $entry['Location_type'],
-          'field_mohoda' => $entry['Mohoda_ft'],
-          'field_north' => $entry['text_sd7wq10'],
-          'field_other_facilities' => $entry['Nearest_landmark'],
-          'field_property_mortgage' => $entry['Property_Mortgage'],
-          'field_property_owner' => $entry['Property_Owner'],
-          'field_property_use' => $entry['Property_use'],
-          'field_required_loan' => $entry['Required_Loan_NPR'],
-          'field_right_of_way' => $entry['Right_of_Way_ft'],
-          'field_river_stream' => $entry['River_stream'],
-          'field_road_type' => $entry['Road_Type'],
-          'field_site_visit_by_consultancy_' => $entry['Site_visitors'],
-          'field_south' => $entry['text_mq6by02'],
-          'field_ter' => $entry['Terrain_type'],
-          'field_trace_plot_no' => $entry['Trace_Plot_No'],
-          'field_type' => $entry['Type_of_loan'],
-          'field_type_of_property' => $entry['Type_of_property'],
-          'field_west' => $entry['text_qo2qv32'],
-          'field_wide' => $entry['Wide_ft'],
+	
+	if (!empty($entry['start'])) {
+		$start_date = new DateTime($entry['start']);
+                $formatted_date = $start_date->format('Y-m-d');	
+	}
+
+	// Create a new node.
+$node = Node::create([
+  'type' => 'survey',
+  'title' => $entry['Client_Name'],
+  'field_survey_date' => $formatted_date,
+  'field_bank_name' => $entry['Bank_Name'],
+  'field_branch' => $entry['Branch'],
+  'field_submission_uuid' => $entry['_uuid'],
+  'field_geo' => $wkt, // Store geolocation in WKT format
+  'field_address' => $entry['Address'],
+  'field_bank_cooperative_name' => $entry['group_rp0ju94/Bank_Cooperative_Name'],
+  'field_client_name' => $entry['Client_Name'],
+  'field_comments' => $entry['Comments'],
+  'field_commercial_rate' => $entry['Commercial_Rate_NPR'],
+  'field_contact_number' => $entry['Contact_Number'],
+  'field_distance_from_road' => $entry['Distance_from_road_ft'],
+  'field_distrance_from_high_tensio' => $entry['Distrance_from_High_Electrical_Line_ft'],
+  'field_doors_and_windows' => $entry['Doors_and_windows'],
+  'field_east' => $entry['group_oh9vg05/text_lu3fu39'],
+  'field_floor_finishing' => $entry['Floor_finishing'],
+  'field_high_tension_electrical_li' => $entry['High_Tension_Electrical_Line'],
+  'field_inner_wall_and_ceiling_sur' => $entry['Inner_wall_and_ceiling_surface'],
+  'field_lalpurja_type' => $entry['Lalpurja_type'],
+  'field_loan_amount' => $entry['group_rp0ju94/Loan_Amount'],
+  'field_location_as_per_cadastral_' => $entry['Location_as_per_Cadastral_Map'],
+  'field_location_type' => $entry['Location_type'],
+  'field_mohoda' => $entry['group_fa8wb71/Mohoda_ft'],
+  'field_north' => $entry['group_oh9vg05/text_sd7wq10'],
+  'field_other_facilities' => $entry['Nearest_landmark'],
+  'field_property_mortgage' => $entry['Property_Mortgage'],
+  'field_property_owner' => $entry['Property_Owner'],
+  'field_property_use' => $entry['Property_use'],
+  'field_required_loan' => $entry['Required_Loan_NPR'],
+  'field_right_of_way' => $entry['Right_of_Way_ft'],
+  'field_river_stream' => $entry['River_stream'],
+  'field_road_type' => $entry['Road_Type'],
+  'field_site_visit_by_consultancy_' => $entry['Site_visitors'],
+  'field_south' => $entry['group_oh9vg05/text_mq6by02'],
+  'field_ter' => $entry['Terrain_type'],
+  'field_trace_plot_no' => $entry['Trace_Plot_No'],
+  'field_type' => $entry['Type_of_loan'],
+  'field_type_of_property' => $entry['Type_of_property'],
+  'field_west' => $entry['group_oh9vg05/text_qo2qv32'],
+  'field_wide' => $entry['group_fa8wb71/Wide_ft'],
+  'field_surveyor' => $entry['_submitted_by'],
+]);
 
 
-        ]);
+        if (!empty($entry['photo_group'])) {
+    foreach ($entry['photo_group'] as $photo_entry) {
+        if (!empty($photo_entry['photo_group/Property_Photo'])) {
+            $image_filename = $photo_entry['photo_group/Property_Photo'];
+            $image_path = "apurwa/attachments/{$entry['formhub/uuid']}/{$entry['_uuid']}/{$image_filename}";
+            $image_url = "https://kc.kobotoolbox.org/media/original?media_file=" . urlencode($image_path);
 
-        // Process Image
-        if (!empty($entry['Property_Photo'])) {
-          $image_path = "apurwa/attachments/cfa07289e9384f918aecc263233f2867/{$entry['_uuid']}/{$entry['Property_Photo']}";
-          $image_url = "https://kc.kobotoolbox.org/media/original?media_file=" . urlencode($image_path);
-
-          $saved_file = save_kobo_image($image_url, $entry['Property_Photo']);
-          if ($saved_file) {
-            $node->set('field_image2', $saved_file->id());
-          }
+            $saved_file = save_kobo_image($image_url, $image_filename);
+            if ($saved_file) {
+                $node->field_image2[] = ['target_id' => $saved_file->id()];
+            }
         }
+    }
+
+}
 
         $node->save();
       }
@@ -116,7 +128,10 @@ function kobo_data_import_cron() {
 /**
  * Downloads an image from KoBo and saves it in Drupal's public files.
  */
-function save_kobo_image($image_url, $filename) {
+/**
+ * Downloads an image from KoBo, resizes it, and saves it in Drupal's public files.
+ */
+function save_kobo_image($image_url, $filename, $max_width = 1600, $max_height = 1200) {
   $client = new Client();
   $directory = 'public://kobo_images/';
 
@@ -124,14 +139,62 @@ function save_kobo_image($image_url, $filename) {
   \Drupal::service('file_system')->prepareDirectory($directory, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY);
 
   try {
+    // Download the image content.
     $response = $client->request('GET', $image_url, [
       'auth' => ['apurwa', '1223334444'],
-      'sink' => $directory . $filename,
     ]);
 
     if ($response->getStatusCode() == 200) {
+      $image_data = $response->getBody()->getContents();
+      $source_image = imagecreatefromstring($image_data);
+
+      if (!$source_image) {
+        return NULL;
+      }
+
+      // Check EXIF data for orientation
+      $exif_data = exif_read_data('data://image/jpeg;base64,' . base64_encode($image_data));
+      $orientation = isset($exif_data['Orientation']) ? $exif_data['Orientation'] : null;
+
+      // Correct orientation if necessary
+      if ($orientation) {
+        switch ($orientation) {
+          case 3:
+            $source_image = imagerotate($source_image, 180, 0); // Rotate 180 degrees
+            break;
+          case 6:
+            $source_image = imagerotate($source_image, -90, 0); // Rotate 90 degrees counter-clockwise
+            break;
+          case 8:
+            $source_image = imagerotate($source_image, 90, 0); // Rotate 90 degrees clockwise
+            break;
+        }
+      }
+
+      // Get original dimensions
+      $orig_width = imagesx($source_image);
+      $orig_height = imagesy($source_image);
+
+      // Calculate new dimensions while maintaining aspect ratio
+      $ratio = min($max_width / $orig_width, $max_height / $orig_height);
+      $new_width = (int) ($orig_width * $ratio);
+      $new_height = (int) ($orig_height * $ratio);
+
+      // Create a new blank image
+      $resized_image = imagecreatetruecolor($new_width, $new_height);
+      imagecopyresampled($resized_image, $source_image, 0, 0, 0, 0, $new_width, $new_height, $orig_width, $orig_height);
+
+      // Define the file path
+      $file_path = $directory . $filename;
+      imagejpeg($resized_image, \Drupal::service('file_system')->realpath($file_path), 80); // Save as JPEG with 80% quality
+
+      // Free memory
+      imagedestroy($source_image);
+      imagedestroy($resized_image);
+
+      // Save resized image in Drupal file system
       $file = File::create([
-        'uri' => $directory . $filename,
+        'uri' => $file_path,
         'status' => 1,
       ]);
       $file->save();
